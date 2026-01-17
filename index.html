@@ -24,7 +24,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
@@ -222,6 +222,11 @@
             font-weight: 500;
         }
 
+        .team-members {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
         .semester-badge {
             display: inline-block;
             padding: 0.25rem 0.5rem;
@@ -276,7 +281,7 @@
     <div class="container">
         <header>
             <h1>RISC-V Processor Leaderboard</h1>
-            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations</p>
+            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations for undergrad computer architecture</p>
         </header>
 
         <div class="filters">
@@ -290,16 +295,6 @@
                 <label for="semester-filter">Semester</label>
                 <select id="semester-filter">
                     <option value="all">All Semesters</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="metric-filter">Rank By</label>
-                <select id="metric-filter">
-                    <option value="ipc">IPC</option>
-                    <option value="cycle_count">Cycle Count</option>
-                    <option value="frequency_mhz">Frequency (MHz)</option>
-                    <option value="area_mm2">Area (mm²)</option>
-                    <option value="power_mw">Power (mW)</option>
                 </select>
             </div>
         </div>
@@ -529,61 +524,6 @@
             });
         }
 
-        // Rank data by metric
-        function rankData(data, metric) {
-            const config = METRICS[metric];
-            const sorted = [...data].sort((a, b) => {
-                const diff = a[metric] - b[metric];
-                return config.higherIsBetter ? -diff : diff;
-            });
-
-            let currentRank = 1;
-            let prevValue = null;
-
-            sorted.forEach((row, idx) => {
-                if (prevValue !== null && row[metric] !== prevValue) {
-                    currentRank = idx + 1;
-                }
-                row.rank = currentRank;
-                prevValue = row[metric];
-            });
-
-            return sorted;
-        }
-
-        // Sort data by column (for table header clicks)
-        function sortByColumn(data, column) {
-            if (column === 'team_name' || column === 'team_members') {
-                return data; // No sorting allowed on these columns
-            }
-
-            if (currentSort.column === column) {
-                currentSort.ascending = !currentSort.ascending;
-            } else {
-                currentSort.column = column;
-                // Default sort direction based on metric
-                if (METRICS[column]) {
-                    currentSort.ascending = !METRICS[column].higherIsBetter;
-                } else {
-                    currentSort.ascending = true;
-                }
-            }
-
-            return [...data].sort((a, b) => {
-                let valA = a[column];
-                let valB = b[column];
-
-                if (typeof valA === 'string') {
-                    valA = valA.toLowerCase();
-                    valB = valB.toLowerCase();
-                }
-
-                if (valA < valB) return currentSort.ascending ? -1 : 1;
-                if (valA > valB) return currentSort.ascending ? 1 : -1;
-                return 0;
-            });
-        }
-
         // Format number for display
         function formatValue(value, metric) {
             if (metric === 'cycle_count') {
@@ -598,19 +538,42 @@
         // Render leaderboard table
         function renderTable(data) {
             const container = document.getElementById('leaderboard-content');
-            const metric = document.getElementById('metric-filter').value;
 
             if (data.length === 0) {
                 container.innerHTML = '<div class="no-data">No data available for the selected filters.</div>';
                 return;
             }
 
-            // Rank by selected metric
-            let rankedData = rankData(data, metric);
+            // Sort data by current column (default to IPC if none selected)
+            let sortedData = [...data];
+            const sortColumn = currentSort.column || 'ipc';
 
-            // Apply any additional column sorting
-            if (currentSort.column && currentSort.column !== metric) {
-                rankedData = sortByColumn(rankedData, currentSort.column);
+            if (METRICS[sortColumn]) {
+                const config = METRICS[sortColumn];
+                // Determine sort direction
+                let ascending;
+                if (currentSort.column === null) {
+                    // Default: best values first
+                    ascending = !config.higherIsBetter;
+                } else {
+                    ascending = currentSort.ascending;
+                }
+
+                sortedData.sort((a, b) => {
+                    const diff = a[sortColumn] - b[sortColumn];
+                    return ascending ? diff : -diff;
+                });
+
+                // Assign ranks based on current sort
+                let currentRank = 1;
+                let prevValue = null;
+                sortedData.forEach((row, idx) => {
+                    if (prevValue !== null && row[sortColumn] !== prevValue) {
+                        currentRank = idx + 1;
+                    }
+                    row.rank = currentRank;
+                    prevValue = row[sortColumn];
+                });
             }
 
             const year = document.getElementById('year-filter').value;
@@ -629,22 +592,26 @@
             let html = '<table><thead><tr>';
             html += '<th class="no-sort">Rank</th>';
             html += '<th class="no-sort">Team</th>';
-            if (showSemester) {
-                html += `<th data-column="semester">Semester</th>`;
-                html += `<th data-column="university">University</th>`;
-            }
+            html += '<th class="no-sort">Members</th>';
 
-            // Metric columns
+            // Metric columns (sortable)
             Object.entries(METRICS).forEach(([key, config]) => {
-                const sortClass = currentSort.column === key
+                const isCurrentSort = (currentSort.column === key) || (currentSort.column === null && key === 'ipc');
+                const sortClass = isCurrentSort
                     ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
                     : '';
                 html += `<th data-column="${key}" class="${sortClass}">${config.name}</th>`;
             });
 
+            // Semester and University at the end
+            if (showSemester) {
+                html += `<th class="no-sort">Semester</th>`;
+                html += `<th class="no-sort">University</th>`;
+            }
+
             html += '</tr></thead><tbody>';
 
-            rankedData.forEach(row => {
+            sortedData.forEach(row => {
                 const rankClass = row.rank <= 3 ? `rank-${row.rank}` : '';
                 let medal = '';
                 if (row.rank === 1) medal = '<span class="medal">&#129351;</span> ';
@@ -654,16 +621,18 @@
                 html += '<tr>';
                 html += `<td class="rank ${rankClass}">${medal}${row.rank}</td>`;
                 html += `<td class="team-name">${row.team_name}</td>`;
+                html += `<td class="team-members">${row.team_members || ''}</td>`;
 
+                Object.keys(METRICS).forEach(key => {
+                    html += `<td>${formatValue(row[key], key)}</td>`;
+                });
+
+                // Semester and University at the end
                 if (showSemester) {
                     const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
                     html += `<td><span class="semester-badge">${semDisplay} ${row.year}</span></td>`;
                     html += `<td>${row.university}</td>`;
                 }
-
-                Object.keys(METRICS).forEach(key => {
-                    html += `<td>${formatValue(row[key], key)}</td>`;
-                });
 
                 html += '</tr>';
             });
@@ -671,14 +640,19 @@
             html += '</tbody></table>';
             container.innerHTML = html;
 
-            // Add click handlers for sortable columns
+            // Add click handlers for sortable metric columns
             container.querySelectorAll('th[data-column]').forEach(th => {
                 th.addEventListener('click', () => {
                     const column = th.dataset.column;
-                    if (column !== 'team_name' && column !== 'team_members') {
+                    if (currentSort.column === column) {
+                        // Toggle direction
+                        currentSort.ascending = !currentSort.ascending;
+                    } else {
+                        // New column - default to best values first
                         currentSort.column = column;
-                        renderTable(filterData(allData));
+                        currentSort.ascending = !METRICS[column].higherIsBetter;
                     }
+                    renderTable(filterData(allData));
                 });
             });
         }
@@ -705,7 +679,6 @@
             // Add event listeners
             document.getElementById('year-filter').addEventListener('change', updateDisplay);
             document.getElementById('semester-filter').addEventListener('change', updateDisplay);
-            document.getElementById('metric-filter').addEventListener('change', updateDisplay);
 
             // Initial render
             updateDisplay();
