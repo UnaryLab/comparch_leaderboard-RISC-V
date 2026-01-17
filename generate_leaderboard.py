@@ -47,10 +47,12 @@ def load_csv(filepath: Path) -> List[Dict]:
     with open(filepath, "r", newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Convert numeric fields
+            # Convert numeric fields (handle empty values)
             for key in ["ipc", "cycle_count", "frequency_mhz", "area_mm2", "power_mw"]:
-                if key in row:
+                if key in row and row[key].strip():
                     row[key] = float(row[key])
+                elif key in row:
+                    row[key] = None
             rows.append(row)
     return rows
 
@@ -89,8 +91,18 @@ def rank_data(data: List[Dict], metric: str, higher_is_better: bool) -> List[Dic
     if not data:
         return data
 
+    # Filter out rows with None values for this metric
+    valid_data = [row for row in data if row.get(metric) is not None]
+    invalid_data = [row for row in data if row.get(metric) is None]
+
+    if not valid_data:
+        # All values are None, assign no rank
+        for row in data:
+            row[f"{metric}_rank"] = None
+        return data
+
     # Sort by metric value
-    sorted_data = sorted(data, key=lambda x: x[metric], reverse=higher_is_better)
+    sorted_data = sorted(valid_data, key=lambda x: x[metric], reverse=higher_is_better)
 
     # Assign ranks (handling ties)
     current_rank = 1
@@ -101,11 +113,17 @@ def rank_data(data: List[Dict], metric: str, higher_is_better: bool) -> List[Dic
         row[f"{metric}_rank"] = current_rank
         prev_value = row[metric]
 
-    return sorted_data
+    # Assign no rank to invalid rows
+    for row in invalid_data:
+        row[f"{metric}_rank"] = None
+
+    return sorted_data + invalid_data
 
 
-def format_value(value: float, metric: str) -> str:
+def format_value(value, metric: str) -> str:
     """Format a metric value for display."""
+    if value is None:
+        return "-"
     if metric == "cycle_count":
         return f"{int(value):,}"
     elif metric in ["ipc", "area_mm2"]:
@@ -142,8 +160,10 @@ def generate_metric_table(
 
     for row in ranked_data:
         rank = row[f"{metric}_rank"]
-        # Add medal emoji for top 3
-        if rank == 1:
+        # Add medal emoji for top 3, handle None ranks
+        if rank is None:
+            rank_str = "-"
+        elif rank == 1:
             rank_str = "🥇 1"
         elif rank == 2:
             rank_str = "🥈 2"
