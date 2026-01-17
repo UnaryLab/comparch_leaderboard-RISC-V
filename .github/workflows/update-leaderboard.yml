@@ -1,21 +1,27 @@
-name: Update Leaderboard
+name: Update Leaderboard and Deploy
 
 on:
   push:
     paths:
       - 'database/*.csv'
       - 'generate_leaderboard.py'
+      - 'index.html'
+    branches:
+      - main
   pull_request:
     paths:
       - 'database/*.csv'
       - 'generate_leaderboard.py'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  update-leaderboard:
+  update-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout repository
@@ -26,19 +32,34 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Generate leaderboard
+      - name: Generate leaderboard and files.json
         run: python generate_leaderboard.py
 
       - name: Check for changes
         id: changes
         run: |
-          git diff --quiet README.md || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet README.md database/files.json || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push if changed
+      - name: Commit changes
         if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add README.md
+          git add README.md database/files.json
           git commit -m "Update leaderboard [skip ci]"
           git push
+
+      - name: Setup Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request'
+        id: deployment
+        uses: actions/deploy-pages@v4

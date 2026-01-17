@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RISC-V Processor Leaderboard</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #22c55e;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .filters {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        select {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .metrics-info {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .metrics-info h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            padding: 0.75rem;
+            background: var(--bg);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .metric-card .name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-card .desc {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .metric-card .better {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .leaderboard-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        th:hover {
+            background: #e2e8f0;
+        }
+
+        th.sorted-asc::after {
+            content: ' ▲';
+            font-size: 0.75rem;
+        }
+
+        th.sorted-desc::after {
+            content: ' ▼';
+            font-size: 0.75rem;
+        }
+
+        th.no-sort {
+            cursor: default;
+        }
+
+        th.no-sort:hover {
+            background: var(--bg);
+        }
+
+        tr:hover {
+            background: #f1f5f9;
+        }
+
+        .rank {
+            font-weight: 700;
+            width: 60px;
+        }
+
+        .rank-1 { color: #fbbf24; }
+        .rank-2 { color: #9ca3af; }
+        .rank-3 { color: #b45309; }
+
+        .medal {
+            font-size: 1.25rem;
+        }
+
+        .team-name {
+            font-weight: 500;
+        }
+
+        .semester-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            select {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RISC-V Processor Leaderboard</h1>
+            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations</p>
+        </header>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label for="year-filter">Year</label>
+                <select id="year-filter">
+                    <option value="all">All Years</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="semester-filter">Semester</label>
+                <select id="semester-filter">
+                    <option value="all">All Semesters</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="metric-filter">Rank By</label>
+                <select id="metric-filter">
+                    <option value="ipc">IPC</option>
+                    <option value="cycle_count">Cycle Count</option>
+                    <option value="frequency_mhz">Frequency (MHz)</option>
+                    <option value="area_mm2">Area (mm²)</option>
+                    <option value="power_mw">Power (mW)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="metrics-info">
+            <h2>Metrics Guide</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="name">IPC</div>
+                    <div class="desc">Instructions Per Cycle</div>
+                    <div class="better">↑ Higher is better</div>
+                </div>
+                <div class="metric-card">
+                    <div class="name">Cycle Count</div>
+                    <div class="desc">End-to-end program cycles</div>
+                    <div class="better">↓ Lower is better</div>
+                </div>
+                <div class="metric-card">
+                    <div class="name">Frequency</div>
+                    <div class="desc">Synthesis frequency (MHz)</div>
+                    <div class="better">↑ Higher is better</div>
+                </div>
+                <div class="metric-card">
+                    <div class="name">Area</div>
+                    <div class="desc">Chip area (mm²)</div>
+                    <div class="better">↓ Lower is better</div>
+                </div>
+                <div class="metric-card">
+                    <div class="name">Power</div>
+                    <div class="desc">Power consumption (mW)</div>
+                    <div class="better">↓ Lower is better</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="leaderboard-section">
+            <h2 id="leaderboard-title">Leaderboard</h2>
+            <div class="table-container">
+                <div id="leaderboard-content" class="loading">Loading data...</div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Data sourced from <code>/database/</code> directory. Add new CSV files to include more semesters.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration
+        const METRICS = {
+            ipc: { name: 'IPC', higherIsBetter: true },
+            cycle_count: { name: 'Cycle Count', higherIsBetter: false },
+            frequency_mhz: { name: 'Frequency (MHz)', higherIsBetter: true },
+            area_mm2: { name: 'Area (mm²)', higherIsBetter: false },
+            power_mw: { name: 'Power (mW)', higherIsBetter: false }
+        };
+
+        let allData = [];
+        let currentSort = { column: null, ascending: true };
+
+        // Parse CSV text to array of objects
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                const values = parseCSVLine(lines[i]);
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, idx) => {
+                        row[header] = values[idx];
+                    });
+                    // Convert numeric fields
+                    ['ipc', 'cycle_count', 'frequency_mhz', 'area_mm2', 'power_mw'].forEach(key => {
+                        if (row[key]) row[key] = parseFloat(row[key]);
+                    });
+                    data.push(row);
+                }
+            }
+            return data;
+        }
+
+        // Handle CSV values with commas inside quotes
+        function parseCSVLine(line) {
+            const values = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    values.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            values.push(current.trim());
+            return values;
+        }
+
+        // Parse filename to get year, semester, university
+        function parseFilename(filename) {
+            const name = filename.replace('.csv', '');
+            const parts = name.split('-');
+            if (parts.length >= 3) {
+                return {
+                    year: parts[0],
+                    semester: parts[1],
+                    university: parts.slice(2).join('-').toUpperCase()
+                };
+            }
+            return null;
+        }
+
+        // Fetch all CSV files from database directory
+        async function loadAllData() {
+            try {
+                // Fetch the list of CSV files from database directory
+                const response = await fetch('database/');
+
+                if (!response.ok) {
+                    // If directory listing fails, try known files
+                    return await loadKnownFiles();
+                }
+
+                const html = await response.text();
+                const csvFiles = [...html.matchAll(/href="([^"]+\.csv)"/g)].map(m => m[1]);
+
+                if (csvFiles.length === 0) {
+                    return await loadKnownFiles();
+                }
+
+                return await loadCSVFiles(csvFiles);
+            } catch (e) {
+                console.log('Falling back to known files:', e);
+                return await loadKnownFiles();
+            }
+        }
+
+        // Load from a predefined list (fallback)
+        async function loadKnownFiles() {
+            // This list is auto-generated and can be updated
+            const knownFiles = await fetchFileList();
+            return await loadCSVFiles(knownFiles);
+        }
+
+        // Fetch file list from generated JSON
+        async function fetchFileList() {
+            try {
+                const response = await fetch('database/files.json');
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (e) {
+                console.log('files.json not found, using hardcoded list');
+            }
+            // Fallback hardcoded list
+            return ['2026-spring-ucf.csv', '2026-fall-ucf.csv'];
+        }
+
+        // Load CSV files
+        async function loadCSVFiles(files) {
+            const allRows = [];
+
+            for (const file of files) {
+                try {
+                    const response = await fetch(`database/${file}`);
+                    if (!response.ok) continue;
+
+                    const text = await response.text();
+                    const info = parseFilename(file);
+
+                    if (info) {
+                        const rows = parseCSV(text);
+                        rows.forEach(row => {
+                            row.year = info.year;
+                            row.semester = info.semester;
+                            row.university = info.university;
+                        });
+                        allRows.push(...rows);
+                    }
+                } catch (e) {
+                    console.error(`Failed to load ${file}:`, e);
+                }
+            }
+
+            return allRows;
+        }
+
+        // Populate filter dropdowns
+        function populateFilters(data) {
+            const years = [...new Set(data.map(d => d.year))].sort().reverse();
+            const semesters = [...new Set(data.map(d => d.semester))];
+
+            const yearSelect = document.getElementById('year-filter');
+            years.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearSelect.appendChild(option);
+            });
+
+            const semesterSelect = document.getElementById('semester-filter');
+            const semesterOrder = { spring: 1, summer: 2, fall: 3 };
+            semesters.sort((a, b) => (semesterOrder[a] || 99) - (semesterOrder[b] || 99));
+            semesters.forEach(sem => {
+                const option = document.createElement('option');
+                option.value = sem;
+                option.textContent = sem.charAt(0).toUpperCase() + sem.slice(1);
+                semesterSelect.appendChild(option);
+            });
+        }
+
+        // Filter data based on current selections
+        function filterData(data) {
+            const year = document.getElementById('year-filter').value;
+            const semester = document.getElementById('semester-filter').value;
+
+            return data.filter(row => {
+                if (year !== 'all' && row.year !== year) return false;
+                if (semester !== 'all' && row.semester !== semester) return false;
+                return true;
+            });
+        }
+
+        // Rank data by metric
+        function rankData(data, metric) {
+            const config = METRICS[metric];
+            const sorted = [...data].sort((a, b) => {
+                const diff = a[metric] - b[metric];
+                return config.higherIsBetter ? -diff : diff;
+            });
+
+            let currentRank = 1;
+            let prevValue = null;
+
+            sorted.forEach((row, idx) => {
+                if (prevValue !== null && row[metric] !== prevValue) {
+                    currentRank = idx + 1;
+                }
+                row.rank = currentRank;
+                prevValue = row[metric];
+            });
+
+            return sorted;
+        }
+
+        // Sort data by column (for table header clicks)
+        function sortByColumn(data, column) {
+            if (column === 'team_name' || column === 'team_members') {
+                return data; // No sorting allowed on these columns
+            }
+
+            if (currentSort.column === column) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.column = column;
+                // Default sort direction based on metric
+                if (METRICS[column]) {
+                    currentSort.ascending = !METRICS[column].higherIsBetter;
+                } else {
+                    currentSort.ascending = true;
+                }
+            }
+
+            return [...data].sort((a, b) => {
+                let valA = a[column];
+                let valB = b[column];
+
+                if (typeof valA === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                if (valA < valB) return currentSort.ascending ? -1 : 1;
+                if (valA > valB) return currentSort.ascending ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Format number for display
+        function formatValue(value, metric) {
+            if (metric === 'cycle_count') {
+                return value.toLocaleString();
+            } else if (metric === 'ipc' || metric === 'area_mm2') {
+                return value.toFixed(2);
+            } else {
+                return value.toFixed(0);
+            }
+        }
+
+        // Render leaderboard table
+        function renderTable(data) {
+            const container = document.getElementById('leaderboard-content');
+            const metric = document.getElementById('metric-filter').value;
+
+            if (data.length === 0) {
+                container.innerHTML = '<div class="no-data">No data available for the selected filters.</div>';
+                return;
+            }
+
+            // Rank by selected metric
+            let rankedData = rankData(data, metric);
+
+            // Apply any additional column sorting
+            if (currentSort.column && currentSort.column !== metric) {
+                rankedData = sortByColumn(rankedData, currentSort.column);
+            }
+
+            const year = document.getElementById('year-filter').value;
+            const semester = document.getElementById('semester-filter').value;
+            const showSemester = year === 'all' || semester === 'all';
+
+            // Update title
+            const title = document.getElementById('leaderboard-title');
+            if (year !== 'all' && semester !== 'all') {
+                title.textContent = `${semester.charAt(0).toUpperCase() + semester.slice(1)} ${year} Leaderboard`;
+            } else {
+                title.textContent = 'All-Time Leaderboard';
+            }
+
+            // Build table HTML
+            let html = '<table><thead><tr>';
+            html += '<th class="no-sort">Rank</th>';
+            html += '<th class="no-sort">Team</th>';
+            if (showSemester) {
+                html += `<th data-column="semester">Semester</th>`;
+                html += `<th data-column="university">University</th>`;
+            }
+
+            // Metric columns
+            Object.entries(METRICS).forEach(([key, config]) => {
+                const sortClass = currentSort.column === key
+                    ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
+                    : '';
+                html += `<th data-column="${key}" class="${sortClass}">${config.name}</th>`;
+            });
+
+            html += '</tr></thead><tbody>';
+
+            rankedData.forEach(row => {
+                const rankClass = row.rank <= 3 ? `rank-${row.rank}` : '';
+                let medal = '';
+                if (row.rank === 1) medal = '<span class="medal">&#129351;</span> ';
+                else if (row.rank === 2) medal = '<span class="medal">&#129352;</span> ';
+                else if (row.rank === 3) medal = '<span class="medal">&#129353;</span> ';
+
+                html += '<tr>';
+                html += `<td class="rank ${rankClass}">${medal}${row.rank}</td>`;
+                html += `<td class="team-name">${row.team_name}</td>`;
+
+                if (showSemester) {
+                    const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
+                    html += `<td><span class="semester-badge">${semDisplay} ${row.year}</span></td>`;
+                    html += `<td>${row.university}</td>`;
+                }
+
+                Object.keys(METRICS).forEach(key => {
+                    html += `<td>${formatValue(row[key], key)}</td>`;
+                });
+
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+
+            // Add click handlers for sortable columns
+            container.querySelectorAll('th[data-column]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.column;
+                    if (column !== 'team_name' && column !== 'team_members') {
+                        currentSort.column = column;
+                        renderTable(filterData(allData));
+                    }
+                });
+            });
+        }
+
+        // Update display when filters change
+        function updateDisplay() {
+            currentSort = { column: null, ascending: true }; // Reset sort when filter changes
+            const filtered = filterData(allData);
+            renderTable(filtered);
+        }
+
+        // Initialize
+        async function init() {
+            allData = await loadAllData();
+
+            if (allData.length === 0) {
+                document.getElementById('leaderboard-content').innerHTML =
+                    '<div class="no-data">No data found. Please add CSV files to the database directory.</div>';
+                return;
+            }
+
+            populateFilters(allData);
+
+            // Add event listeners
+            document.getElementById('year-filter').addEventListener('change', updateDisplay);
+            document.getElementById('semester-filter').addEventListener('change', updateDisplay);
+            document.getElementById('metric-filter').addEventListener('change', updateDisplay);
+
+            // Initial render
+            updateDisplay();
+        }
+
+        init();
+    </script>
+</body>
+</html>

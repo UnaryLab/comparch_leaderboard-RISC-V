@@ -8,6 +8,7 @@ Uses only Python standard library - no external dependencies required.
 """
 
 import csv
+import json
 import os
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
@@ -253,6 +254,15 @@ def generate_filter_buttons() -> str:
     return "\n".join(lines)
 
 
+def generate_files_json() -> None:
+    """Generate files.json listing all CSV files for the web interface."""
+    csv_files = sorted([f.name for f in DATABASE_DIR.glob("*.csv")])
+    files_json_path = DATABASE_DIR / "files.json"
+    with open(files_json_path, "w", encoding="utf-8") as f:
+        json.dump(csv_files, f)
+    print(f"Generated: {files_json_path}")
+
+
 def generate_full_readme() -> str:
     """Generate the complete README.md content."""
     lines = ["# RISC-V Processor Leaderboard"]
@@ -297,6 +307,10 @@ def main():
     parser.add_argument("--semester", "-s", help="Filter by semester (for custom output)")
     args = parser.parse_args()
 
+    # Generate files.json for the web interface
+    generate_files_json()
+
+    # Generate README.md
     readme_content = generate_full_readme()
 
     output_path = Path(__file__).parent / args.output
