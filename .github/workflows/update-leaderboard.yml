@@ -6,7 +6,6 @@ on:
       - 'database/*.csv'
       - 'generate_leaderboard.py'
       - 'index.html'
-      - 'README.md'  # ADDED: Trigger when you manually update README too
     branches:
       - main
   pull_request:
@@ -39,14 +38,14 @@ jobs:
       - name: Check for changes
         id: changes
         run: |
-          git diff --quiet README.md database/files.json || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet database/files.json || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit changes
         if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add README.md database/files.json
+          git add database/files.json
           git commit -m "Update leaderboard [skip ci]"
           git push
 
