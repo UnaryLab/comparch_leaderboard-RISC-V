@@ -1,7 +1,7 @@
 team_name,ipc,cycle_count,frequency_mhz,area_mm2,power_mw
-Pipeline Masters,1.25,15000,150,0.85,120
-RISC Runners,1.18,16200,145,0.78,115
-Hazard Heroes,1.32,14500,155,0.92,135
-Branch Predictors,1.41,13800,160,0.88,128
-Cache Cowboys,1.15,16800,140,0.72,105
-Forwarding Force,1.28,15200,148,0.82,118
+Pipeline Masters,1.25,15000,,,
+RISC Runners,1.18,16200,,,
+Hazard Heroes,1.32,14500,,,
+Branch Predictors,1.41,13800,,,
+Cache Cowboys,1.15,16800,,,
+Forwarding Force,1.28,15200,,,
