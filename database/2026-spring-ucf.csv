@@ -1,0 +1,7 @@
+team_name,team_members,ipc,cycle_count,frequency_mhz,area_mm2,power_mw
+Pipeline Masters,"Alice Johnson, Bob Smith",1.25,15000,150,0.85,120
+RISC Runners,"Charlie Brown, Diana Prince",1.18,16200,145,0.78,115
+Hazard Heroes,"Eve Wilson, Frank Miller",1.32,14500,155,0.92,135
+Branch Predictors,"Grace Lee, Henry Chen",1.41,13800,160,0.88,128
+Cache Cowboys,"Ivy Martinez, Jack Davis",1.15,16800,140,0.72,105
+Forwarding Force,"Kate Thompson, Leo Garcia",1.28,15200,148,0.82,118
