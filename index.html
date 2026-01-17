@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RISC-V Processor Leaderboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --primary: #2563eb;
@@ -250,6 +251,39 @@
             font-style: italic;
         }
 
+        .charts-section {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .charts-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-container {
+            background: var(--bg);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+            height: 280px;
+        }
+
+        .chart-container h3 {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
         footer {
             text-align: center;
             padding: 2rem;
@@ -309,7 +343,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="name">Cycle Count</div>
-                    <div class="desc">End-to-end program cycles</div>
+                    <div class="desc">Total program cycles</div>
                     <div class="better">↓ Lower is better</div>
                 </div>
                 <div class="metric-card">
@@ -326,6 +360,27 @@
                     <div class="name">Power</div>
                     <div class="desc">Power consumption (mW)</div>
                     <div class="better">↓ Lower is better</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <h2>Metrics Distribution</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <canvas id="chart-ipc"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-cycle_count"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-frequency_mhz"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-area_mm2"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chart-power_mw"></canvas>
                 </div>
             </div>
         </div>
@@ -354,6 +409,7 @@
 
         let allData = [];
         let currentSort = { column: null, ascending: true };
+        let charts = {};
 
         // Parse CSV text to array of objects
         function parseCSV(text) {
@@ -657,10 +713,111 @@
             });
         }
 
+        // Chart colors
+        const CHART_COLORS = [
+            'rgba(37, 99, 235, 0.7)',   // blue
+            'rgba(34, 197, 94, 0.7)',   // green
+            'rgba(249, 115, 22, 0.7)',  // orange
+            'rgba(168, 85, 247, 0.7)',  // purple
+            'rgba(236, 72, 153, 0.7)',  // pink
+            'rgba(20, 184, 166, 0.7)',  // teal
+            'rgba(245, 158, 11, 0.7)',  // amber
+            'rgba(239, 68, 68, 0.7)',   // red
+            'rgba(99, 102, 241, 0.7)',  // indigo
+            'rgba(16, 185, 129, 0.7)',  // emerald
+            'rgba(251, 146, 60, 0.7)',  // orange light
+            'rgba(139, 92, 246, 0.7)',  // violet
+        ];
+
+        // Render point cloud charts
+        function renderCharts(data) {
+            if (data.length === 0) return;
+
+            Object.entries(METRICS).forEach(([key, config], metricIndex) => {
+                const canvas = document.getElementById(`chart-${key}`);
+                if (!canvas) return;
+
+                // Destroy existing chart if any
+                if (charts[key]) {
+                    charts[key].destroy();
+                }
+
+                // Prepare data points - each team is a point
+                const chartData = data.map((row, idx) => ({
+                    x: idx + 1,
+                    y: row[key],
+                    label: row.team_name
+                }));
+
+                // Create chart
+                charts[key] = new Chart(canvas, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: config.name,
+                            data: chartData,
+                            backgroundColor: data.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+                            borderColor: data.map((_, i) => CHART_COLORS[i % CHART_COLORS.length].replace('0.7', '1')),
+                            borderWidth: 2,
+                            pointRadius: 8,
+                            pointHoverRadius: 12
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: config.name + (config.higherIsBetter ? ' (↑ Higher is better)' : ' (↓ Lower is better)'),
+                                font: {
+                                    family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif",
+                                    size: 14
+                                }
+                            },
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const point = context.raw;
+                                        return `${point.label}: ${formatValue(point.y, key)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: false,
+                                min: 0,
+                                max: data.length + 1
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: config.name,
+                                    font: {
+                                        family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
+                                    }
+                                },
+                                ticks: {
+                                    font: {
+                                        family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         // Update display when filters change
         function updateDisplay() {
             currentSort = { column: null, ascending: true }; // Reset sort when filter changes
             const filtered = filterData(allData);
+            renderCharts(filtered);
             renderTable(filtered);
         }
 
