@@ -82,6 +82,7 @@
             border: 1px solid var(--border);
             border-radius: 6px;
             font-size: 1rem;
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
             background: white;
             cursor: pointer;
             min-width: 150px;
@@ -222,21 +223,6 @@
             font-weight: 500;
         }
 
-        .team-members {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .semester-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            background: #e0f2fe;
-            color: #0369a1;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-
         .loading {
             text-align: center;
             padding: 3rem;
@@ -314,7 +300,7 @@
     <div class="container">
         <header>
             <h1>RISC-V Processor Leaderboard</h1>
-            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations (RV32I) for undergrad computer architecture courses</p>
+            <p class="subtitle">Comparing 5-stage pipelined RISC-V (RV32I) processor implementations for undergrad computer architecture courses</p>
         </header>
 
         <div class="filters">
@@ -462,7 +448,7 @@
                 return {
                     year: parts[0],
                     semester: parts[1],
-                    university: parts.slice(2).join('-').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('-')
+                    university: parts.slice(2).join('-').toUpperCase()
                 };
             }
             return null;
@@ -603,7 +589,23 @@
             let sortedData = [...data];
             const sortColumn = currentSort.column || 'ipc';
 
-            if (METRICS[sortColumn]) {
+            if (sortColumn === 'semester') {
+                // Sort by year (and semester within year)
+                const semesterOrder = { spring: 1, summer: 2, fall: 3 };
+                sortedData.sort((a, b) => {
+                    const yearDiff = parseInt(a.year) - parseInt(b.year);
+                    if (yearDiff !== 0) {
+                        return currentSort.ascending ? yearDiff : -yearDiff;
+                    }
+                    const semDiff = (semesterOrder[a.semester] || 0) - (semesterOrder[b.semester] || 0);
+                    return currentSort.ascending ? semDiff : -semDiff;
+                });
+
+                // No ranking for semester sort - just use row index
+                sortedData.forEach((row, idx) => {
+                    row.rank = idx + 1;
+                });
+            } else if (METRICS[sortColumn]) {
                 const config = METRICS[sortColumn];
                 // Determine sort direction
                 let ascending;
@@ -647,7 +649,6 @@
             let html = '<table><thead><tr>';
             html += '<th class="no-sort">Rank</th>';
             html += '<th class="no-sort">Team</th>';
-            html += '<th class="no-sort">Members</th>';
 
             // Metric columns (sortable)
             Object.entries(METRICS).forEach(([key, config]) => {
@@ -658,10 +659,13 @@
                 html += `<th data-column="${key}" class="${sortClass}">${config.name}</th>`;
             });
 
-            // Semester and University at the end
+            // Semester at the end (sortable by year)
             if (showSemester) {
-                html += `<th class="no-sort">Semester</th>`;
-                html += `<th class="no-sort">University</th>`;
+                const isSemesterSort = currentSort.column === 'semester';
+                const semSortClass = isSemesterSort
+                    ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
+                    : '';
+                html += `<th data-column="semester" class="${semSortClass}">Semester</th>`;
             }
 
             html += '</tr></thead><tbody>';
@@ -676,17 +680,15 @@
                 html += '<tr>';
                 html += `<td class="rank ${rankClass}">${medal}${row.rank}</td>`;
                 html += `<td class="team-name">${row.team_name}</td>`;
-                html += `<td class="team-members">${row.team_members || ''}</td>`;
 
                 Object.keys(METRICS).forEach(key => {
                     html += `<td>${formatValue(row[key], key)}</td>`;
                 });
 
-                // Semester and University at the end
+                // Semester at the end
                 if (showSemester) {
                     const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
-                    html += `<td><span class="semester-badge">${semDisplay} ${row.year}</span></td>`;
-                    html += `<td>${row.university}</td>`;
+                    html += `<td>${semDisplay} ${row.year}</td>`;
                 }
 
                 html += '</tr>';
@@ -695,7 +697,7 @@
             html += '</tbody></table>';
             container.innerHTML = html;
 
-            // Add click handlers for sortable metric columns
+            // Add click handlers for sortable columns
             container.querySelectorAll('th[data-column]').forEach(th => {
                 th.addEventListener('click', () => {
                     const column = th.dataset.column;
@@ -703,9 +705,13 @@
                         // Toggle direction
                         currentSort.ascending = !currentSort.ascending;
                     } else {
-                        // New column - default to best values first
+                        // New column - default to best values first (or ascending for semester)
                         currentSort.column = column;
-                        currentSort.ascending = !METRICS[column].higherIsBetter;
+                        if (column === 'semester') {
+                            currentSort.ascending = true; // Oldest first by default
+                        } else {
+                            currentSort.ascending = !METRICS[column].higherIsBetter;
+                        }
                     }
                     renderTable(filterData(allData));
                 });
