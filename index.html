@@ -160,6 +160,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.95rem;
+            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
         }
 
         th, td {
@@ -173,8 +174,6 @@
             font-weight: 600;
             color: var(--text-muted);
             font-size: 0.875rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
@@ -315,7 +314,7 @@
     <div class="container">
         <header>
             <h1>RISC-V Processor Leaderboard</h1>
-            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations for undergrad computer architecture</p>
+            <p class="subtitle">Comparing 5-stage pipelined RISC-V processor implementations (RV32I) for undergrad computer architecture courses</p>
         </header>
 
         <div class="filters">
@@ -364,6 +363,13 @@
             </div>
         </div>
 
+        <div class="leaderboard-section">
+            <h2 id="leaderboard-title">Leaderboard</h2>
+            <div class="table-container">
+                <div id="leaderboard-content" class="loading">Loading data...</div>
+            </div>
+        </div>
+
         <div class="charts-section">
             <h2>Metrics Distribution</h2>
             <div class="charts-grid">
@@ -382,13 +388,6 @@
                 <div class="chart-container">
                     <canvas id="chart-power_mw"></canvas>
                 </div>
-            </div>
-        </div>
-
-        <div class="leaderboard-section">
-            <h2 id="leaderboard-title">Leaderboard</h2>
-            <div class="table-container">
-                <div id="leaderboard-content" class="loading">Loading data...</div>
             </div>
         </div>
 
@@ -463,7 +462,7 @@
                 return {
                     year: parts[0],
                     semester: parts[1],
-                    university: parts.slice(2).join('-').toUpperCase()
+                    university: parts.slice(2).join('-').split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join('-')
                 };
             }
             return null;
