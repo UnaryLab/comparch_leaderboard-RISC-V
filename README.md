@@ -4,6 +4,8 @@ This is a leaderboard for implementing 5-stage pipelined RISC-V (RV32I) processo
 
 The leaderboard can be accessed [here](https://unarylab.github.io/comparch_leaderboard-RISC-V/).
 
+# Usage
+Add new CSV files to the ./database to include all new data points, which will be automated via GithHb workflow.
 
 # Contributor
 The project was set up by Daniel Price in Spring 2026, during his PhD study in the UnaryLab.
