@@ -6,6 +6,7 @@ on:
       - 'database/*.csv'
       - 'generate_leaderboard.py'
       - 'index.html'
+      - 'README.md'  # ADDED: Trigger when you manually update README too
     branches:
       - main
   pull_request:
@@ -26,6 +27,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetches all history so merging works better
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -35,19 +38,25 @@ jobs:
       - name: Generate leaderboard and files.json
         run: python generate_leaderboard.py
 
-      - name: Check for changes
-        id: changes
-        run: |
-          git diff --quiet README.md database/files.json || echo "changed=true" >> $GITHUB_OUTPUT
-
-      - name: Commit changes
-        if: steps.changes.outputs.changed == 'true' && github.event_name != 'pull_request'
+      - name: Commit and Push changes
+        if: github.event_name != 'pull_request'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
+          
+          # 1. Pull latest changes in case you updated README manually while this ran
+          git pull origin main --rebase 
+          
+          # 2. Add only the files that the script updates
           git add README.md database/files.json
-          git commit -m "Update leaderboard [skip ci]"
-          git push
+          
+          # 3. Only commit if there is actually something new to commit
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update leaderboard [skip ci]"
+            git push
+          fi
 
       - name: Setup Pages
         if: github.event_name != 'pull_request'
