@@ -685,6 +685,8 @@
                 html += `<th data-column="semester" class="${semSortClass}">Semester</th>`;
             }
 
+            html += '<th class="no-sort">University</th>';
+
             html += '</tr></thead><tbody>';
 
             sortedData.forEach(row => {
@@ -707,6 +709,8 @@
                     const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
                     html += `<td>${semDisplay} ${row.year}</td>`;
                 }
+
+                html += `<td>${row.university || '-'}</td>`;
 
                 html += '</tr>';
             });
