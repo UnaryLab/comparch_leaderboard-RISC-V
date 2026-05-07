@@ -350,12 +350,77 @@
             </div>
         </div>
 
+        <!-- Semester Setup Summaries -->
+        <div id="semester-setups"></div>
+
         <div class="leaderboard-section">
             <h2 id="leaderboard-title">Leaderboard</h2>
             <div class="table-container">
                 <div id="leaderboard-content" class="loading">Loading data...</div>
             </div>
         </div>
+        // Fetch and display semester setup summaries
+        async function fetchSemesterSetup(year, semester, university) {
+            // Compose the .md filename
+            const filename = `${year}-${semester}-${university.toLowerCase()}.md`;
+            const cacheBuster = `cb=${Date.now()}`;
+            try {
+                const response = await fetch(`database/${filename}?${cacheBuster}`);
+                if (!response.ok) return null;
+                const text = await response.text();
+                // Parse Processor Setup and Workload Setup
+                const procMatch = text.match(/### Processor Setup\n([\s\S]*?)(?=###|$)/);
+                const workloadMatch = text.match(/### Workload Setup\n([\s\S]*?)(?=###|$)/);
+                return {
+                    year,
+                    semester,
+                    university,
+                    processor: procMatch ? procMatch[1].trim() : '',
+                    workload: workloadMatch ? workloadMatch[1].trim() : ''
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function renderSemesterSetups(data) {
+            // Find all unique semester-university combos in filtered data
+            const setups = {};
+            const promises = [];
+            data.forEach(row => {
+                const key = `${row.year}-${row.semester}-${row.university}`;
+                if (!setups[key]) {
+                    setups[key] = null;
+                    promises.push(
+                        fetchSemesterSetup(row.year, row.semester, row.university).then(setup => {
+                            setups[key] = setup;
+                        })
+                    );
+                }
+            });
+            await Promise.all(promises);
+
+            // Render
+            const container = document.getElementById('semester-setups');
+            let html = '';
+            Object.values(setups).forEach(setup => {
+                if (!setup) return;
+                html += `<div class="metrics-info" style="margin-bottom:1.5rem;">
+                    <h2>${setup.semester.charAt(0).toUpperCase() + setup.semester.slice(1)} ${setup.year} (${setup.university}) Setup</h2>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="name">Processor Setup</div>
+                            <div class="desc">${setup.processor || '<span style=\"color:#aaa\">N/A</span>'}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="name">Workload Setup</div>
+                            <div class="desc">${setup.workload || '<span style=\"color:#aaa\">N/A</span>'}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
 
         <div class="charts-section">
             <h2>Distribution</h2>
@@ -506,10 +571,10 @@
         // Load CSV files
         async function loadCSVFiles(files) {
             const allRows = [];
-
+            const cacheBuster = `cb=${Date.now()}`;
             for (const file of files) {
                 try {
-                    const response = await fetch(`database/${file}`);
+                    const response = await fetch(`database/${file}?${cacheBuster}`);
                     if (!response.ok) continue;
 
                     const text = await response.text();
@@ -841,9 +906,10 @@
         }
 
         // Update display when filters change
-        function updateDisplay() {
+        async function updateDisplay() {
             currentSort = { column: null, ascending: true }; // Reset sort when filter changes
             const filtered = filterData(allData);
+            await renderSemesterSetups(filtered);
             renderCharts(filtered);
             renderTable(filtered);
         }
