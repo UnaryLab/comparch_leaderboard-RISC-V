@@ -395,12 +395,19 @@
         };
 
         let allData = [];
-        let currentSort = { column: null, ascending: true };
+        let currentSort = { column: 'ipc', ascending: false }; // Matches default render: IPC, best first
         let charts = {};
+
+        // Escape user-submitted (CSV/markdown/filename) strings before innerHTML interpolation
+        function escapeHtml(s) {
+            return String(s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
 
         // Parse CSV text to array of objects
         function parseCSV(text) {
-            const lines = text.trim().split('\n');
+            const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
             const headers = lines[0].split(',').map(h => h.trim());
             const data = [];
 
@@ -460,50 +467,14 @@
             return null;
         }
 
-        // Fetch all CSV files from database directory
+        // Fetch the generated file list, then load the CSVs
         async function loadAllData() {
-            try {
-                // Fetch the list of CSV files from database directory
-                const response = await fetch('database/');
-
-                if (!response.ok) {
-                    // If directory listing fails, try known files
-                    return await loadKnownFiles();
-                }
-
-                const html = await response.text();
-                const csvFiles = [...html.matchAll(/href="([^"]+\.csv)"/g)].map(m => m[1]);
-
-                if (csvFiles.length === 0) {
-                    return await loadKnownFiles();
-                }
-
-                return await loadCSVFiles(csvFiles);
-            } catch (e) {
-                console.log('Falling back to known files:', e);
-                return await loadKnownFiles();
+            const response = await fetch('database/files.json');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch database/files.json: HTTP ${response.status}`);
             }
-        }
-
-        // Load from a predefined list (fallback)
-        async function loadKnownFiles() {
-            // This list is auto-generated and can be updated
-            const knownFiles = await fetchFileList();
-            return await loadCSVFiles(knownFiles);
-        }
-
-        // Fetch file list from generated JSON
-        async function fetchFileList() {
-            try {
-                const response = await fetch('database/files.json');
-                if (response.ok) {
-                    return await response.json();
-                }
-            } catch (e) {
-                console.log('files.json not found, using hardcoded list');
-            }
-            // Fallback hardcoded list
-            return ['2026-spring-ucf.csv', '2026-fall-ucf.csv'];
+            const csvFiles = await response.json();
+            return await loadCSVFiles(csvFiles);
         }
 
         // Load CSV files
@@ -594,9 +565,9 @@
                 return;
             }
 
-            // Sort data by current column (default to IPC if none selected)
+            // Sort data by current column
             let sortedData = [...data];
-            const sortColumn = currentSort.column || 'ipc';
+            const sortColumn = currentSort.column;
 
             if (sortColumn === 'semester') {
                 // Sort by year (and semester within year)
@@ -610,20 +581,12 @@
                     return currentSort.ascending ? semDiff : -semDiff;
                 });
 
-                // No ranking for semester sort - just use row index
-                sortedData.forEach((row, idx) => {
-                    row.rank = idx + 1;
+                // No meaningful ranking for semester sort
+                sortedData.forEach(row => {
+                    row.rank = '';
                 });
             } else if (METRICS[sortColumn]) {
-                const config = METRICS[sortColumn];
-                // Determine sort direction
-                let ascending;
-                if (currentSort.column === null) {
-                    // Default: best values first
-                    ascending = !config.higherIsBetter;
-                } else {
-                    ascending = currentSort.ascending;
-                }
+                const ascending = currentSort.ascending;
 
                 // Sort with null values at the end
                 sortedData.sort((a, b) => {
@@ -672,7 +635,7 @@
 
             // Metric columns (sortable)
             Object.entries(METRICS).forEach(([key, config]) => {
-                const isCurrentSort = (currentSort.column === key) || (currentSort.column === null && key === 'ipc');
+                const isCurrentSort = currentSort.column === key;
                 const sortClass = isCurrentSort
                     ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
                     : '';
@@ -701,7 +664,7 @@
 
                 html += '<tr>';
                 html += `<td class="rank ${rankClass}">${medal}${row.rank}</td>`;
-                html += `<td class="team-name">${row.team_name}</td>`;
+                html += `<td class="team-name">${escapeHtml(row.team_name)}</td>`;
 
                 Object.keys(METRICS).forEach(key => {
                     html += `<td>${formatValue(row[key], key)}</td>`;
@@ -710,10 +673,10 @@
                 // Semester at the end
                 if (showSemester) {
                     const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
-                    html += `<td>${semDisplay} ${row.year}</td>`;
+                    html += `<td>${escapeHtml(semDisplay)} ${escapeHtml(row.year)}</td>`;
                 }
 
-                html += `<td>${row.university || '-'}</td>`;
+                html += `<td>${row.university ? escapeHtml(row.university) : '-'}</td>`;
 
                 html += '</tr>';
             });
@@ -760,16 +723,17 @@
 
         // Render point cloud charts
         function renderCharts(data) {
+            // Destroy existing charts first so empty data clears stale charts
+            Object.keys(charts).forEach(key => {
+                charts[key].destroy();
+                delete charts[key];
+            });
+
             if (data.length === 0) return;
 
-            Object.entries(METRICS).forEach(([key, config], metricIndex) => {
+            Object.entries(METRICS).forEach(([key, config]) => {
                 const canvas = document.getElementById(`chart-${key}`);
                 if (!canvas) return;
-
-                // Destroy existing chart if any
-                if (charts[key]) {
-                    charts[key].destroy();
-                }
 
                 // Prepare data points - each team is a point (filter out null values)
                 const validData = data.filter(row => row[key] !== null);
@@ -885,15 +849,15 @@
             Object.values(setups).forEach(setup => {
                 if (!setup) return;
                 html += `<div class="metrics-info" style="margin-bottom:1.5rem;">
-                    <h2>${setup.semester.charAt(0).toUpperCase() + setup.semester.slice(1)} ${setup.year} (${setup.university}) Setup</h2>
+                    <h2>${escapeHtml(setup.semester.charAt(0).toUpperCase() + setup.semester.slice(1))} ${escapeHtml(setup.year)} (${escapeHtml(setup.university)}) Setup</h2>
                     <div class="metrics-grid">
                         <div class="metric-card">
                             <div class="name">Processor Setup</div>
-                            <div class="desc">${setup.processor || '<span style="color:#aaa">N/A</span>'}</div>
+                            <div class="desc">${setup.processor ? escapeHtml(setup.processor) : '<span style="color:#aaa">N/A</span>'}</div>
                         </div>
                         <div class="metric-card">
                             <div class="name">Workload Setup</div>
-                            <div class="desc">${setup.workload || '<span style="color:#aaa">N/A</span>'}</div>
+                            <div class="desc">${setup.workload ? escapeHtml(setup.workload) : '<span style="color:#aaa">N/A</span>'}</div>
                         </div>
                     </div>
                 </div>`;
@@ -903,7 +867,7 @@
 
         // Update display when filters change
         async function updateDisplay() {
-            currentSort = { column: null, ascending: true }; // Reset sort when filter changes
+            currentSort = { column: 'ipc', ascending: false }; // Reset sort when filter changes
             const filtered = filterData(allData);
             await renderSemesterSetups(filtered);
             renderCharts(filtered);
@@ -912,7 +876,14 @@
 
         // Initialize
         async function init() {
-            allData = await loadAllData();
+            try {
+                allData = await loadAllData();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('leaderboard-content').innerHTML =
+                    '<div class="no-data">Failed to load data: database/files.json could not be fetched.</div>';
+                return;
+            }
 
             if (allData.length === 0) {
                 document.getElementById('leaderboard-content').innerHTML =

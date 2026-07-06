@@ -9,7 +9,7 @@ Uses only Python standard library - no external dependencies required.
 
 import csv
 import json
-import os
+import sys
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
 import argparse
@@ -44,14 +44,24 @@ def parse_filename(filename: str) -> Optional[Dict]:
 def load_csv(filepath: Path) -> List[Dict]:
     """Load a CSV file and return list of dictionaries."""
     rows = []
-    with open(filepath, "r", newline="", encoding="utf-8") as f:
+    with open(filepath, "r", newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
+        if reader.fieldnames:
+            reader.fieldnames = [h.strip() for h in reader.fieldnames]
         for row in reader:
-            # Convert numeric fields (handle empty values)
+            # Convert numeric fields; tolerate short rows (None), blanks, non-numeric cells
             for key in ["ipc", "cycle_count", "frequency_mhz", "area_mm2", "power_mw"]:
-                if key in row and row[key].strip():
-                    row[key] = float(row[key])
-                elif key in row:
+                val = (row.get(key) or "").strip()
+                if not val:
+                    row[key] = None
+                    continue
+                try:
+                    row[key] = float(val)
+                except ValueError:
+                    print(
+                        f"Warning: {filepath.name}: team '{row.get('team_name', '?')}': non-numeric value '{val}' in column '{key}', treated as missing",
+                        file=sys.stderr,
+                    )
                     row[key] = None
             rows.append(row)
     return rows
@@ -243,7 +253,7 @@ def get_available_semesters() -> List[Tuple[str, str]]:
 
     # Sort by year (descending) then semester
     semester_order = {"spring": 0, "summer": 1, "fall": 2}
-    semesters.sort(key=lambda x: (-int(x[0]), semester_order.get(x[1], 3)))
+    semesters.sort(key=lambda x: (-(int(x[0]) if x[0].isdigit() else 0), semester_order.get(x[1], 3)))
 
     # Remove duplicates while preserving order
     seen = set()
@@ -285,9 +295,16 @@ def generate_files_json() -> None:
 
 def generate_full_readme() -> str:
     """Generate the complete README.md content."""
+    # Curated prose lives here (README.md is fully generated; edit prose here, not there)
     lines = ["# RISC-V Processor Leaderboard"]
     lines.append("")
-    lines.append("This leaderboard compares 5-stage pipelined RISC-V processor implementations from computer architecture courses.")
+    lines.append("This is a leaderboard for implementing 5-stage pipelined RISC-V (RV32I) processors in undergraduate computer architecture courses. ")
+    lines.append("The leaderboard can be accessed [here](https://unarylab.github.io/comparch_leaderboard-RISC-V/).")
+    lines.append("")
+    lines.append("# Usage")
+    lines.append("To automatically include new data, add new CSV files to the ```./database/```. ")
+    lines.append("The CSV files shall be named as year-semester-university, and inside including six fields, ***team_name***, ***ipc***, ***cycle_count***, ***frequency_mhz***, ***area_mm2***, ***power_mw***.")
+    lines.append("Then GitHub workflow will automatically update the leaderboard.")
     lines.append("")
     lines.append("## Metrics")
     lines.append("")
@@ -315,6 +332,9 @@ def generate_full_readme() -> str:
     lines.append("---")
     lines.append("")
     lines.append("*Leaderboard auto-generated from data in `/database/` directory.*")
+    lines.append("")
+    lines.append("# Contributor")
+    lines.append("The project was set up by Daniel Price in Spring 2026, during his PhD study in the UnaryLab.")
     lines.append("")
 
     return "\n".join(lines)

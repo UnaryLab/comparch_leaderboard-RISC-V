@@ -55,11 +55,18 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v4
 
+      - name: Stage site files
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir _site
+          cp index.html README.md _site/
+          cp -r database _site/
+
       - name: Upload artifact
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         if: github.event_name != 'pull_request'
