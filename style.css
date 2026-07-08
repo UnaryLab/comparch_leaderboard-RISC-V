@@ -1,0 +1,237 @@
+/* Cabin — the closest freely-available match to Gill Sans (mirrors the main Unary Lab site) */
+@import url('https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root {
+    --text: #333;
+    --heading: #111;
+    --muted: #666;
+    --faint: #888;
+    --border: #eee;
+    --border-strong: #ddd;
+    --link: navy;
+    --nav-bg: #B0B5AB;
+    --nav-border: #9da29a;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: "Gill Sans", "Gill Sans MT", "Gill Sans Nova", Cabin, Calibri, sans-serif;
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text);
+    background: #fff;
+}
+
+a { color: var(--text); text-decoration: underline; }
+a:hover { color: #000; }
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+main { padding: 32px 0 72px; }
+
+/* ── Navigation (mirrors the main site) ─────────────── */
+nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); position: relative; }
+.nav-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 72px;
+}
+.site-title {
+    font-weight: 700;
+    font-size: 18px;
+    color: #1a1a1a;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+    padding: 10px 0;
+}
+.site-title:hover { color: #000; text-decoration: none; }
+.nav-logo { height: 48px; width: auto; display: block; }
+.nav-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: max-content;
+    background: var(--nav-bg);
+    border-top: 1px solid var(--nav-border);
+    flex-direction: column;
+    z-index: 999;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.nav-links.open { display: flex; }
+.nav-links a {
+    padding: 14px 24px;
+    font-size: 16px;
+    color: #2d2d2d;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    white-space: nowrap;
+    width: 100%;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.nav-links a span::after { display: none; }
+.nav-links a:hover { color: #000; background: rgba(0,0,0,0.08); text-decoration: none; }
+.nav-links a.active { font-weight: 700; color: #000; }
+.nav-toggle {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #2d2d2d;
+    padding: 8px;
+    line-height: 1;
+    font-family: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Page header ─────────────────────────────────────── */
+.page-header { margin-bottom: 32px; }
+.page-title { font-size: 25px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
+.subtitle { color: var(--muted); font-size: 15px; margin-bottom: 4px; }
+.subtitle a { color: var(--link); }
+.subtitle a:hover { color: #000033; }
+
+/* ── Sections ────────────────────────────────────────── */
+.section { margin-bottom: 44px; }
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--heading);
+    border-bottom: 1px solid var(--border-strong);
+    padding-bottom: 6px;
+    margin-bottom: 18px;
+}
+
+/* ── Filters ─────────────────────────────────────────── */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-end;
+    margin-bottom: 32px;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 13px; font-weight: 600; color: var(--faint); }
+select {
+    padding: 7px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 2px;
+    font-size: 15px;
+    font-family: inherit;
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+    min-width: 150px;
+}
+select:focus { outline: none; border-color: var(--faint); }
+
+/* ── Metric / setup cards ────────────────────────────── */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+}
+.metric-card {
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--nav-bg);
+    border-radius: 2px;
+}
+.metric-card .name { font-weight: 700; font-size: 15px; color: var(--heading); margin-bottom: 3px; }
+.metric-card .desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+.metric-card .better { font-size: 13px; margin-top: 4px; color: var(--faint); font-weight: 600; }
+
+/* ── Leaderboard table ───────────────────────────────── */
+.table-container { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+th {
+    font-weight: 700;
+    color: var(--heading);
+    font-size: 14px;
+    border-bottom: 2px solid var(--border-strong);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+th:hover { color: #000; }
+th.sorted-asc::after { content: ' ▲'; font-size: 11px; color: var(--faint); }
+th.sorted-desc::after { content: ' ▼'; font-size: 11px; color: var(--faint); }
+th.no-sort { cursor: default; }
+th.no-sort:hover { color: var(--heading); }
+tbody tr:hover { background: #f6f6f4; }
+.rank { font-weight: 700; width: 60px; color: var(--heading); }
+.rank-1 { color: #c8951b; }
+.rank-2 { color: #8a8a8a; }
+.rank-3 { color: #a05a1e; }
+.medal { font-size: 1.15rem; }
+.team-name { font-weight: 600; color: var(--heading); width: 115px; }
+
+.loading { text-align: center; padding: 48px; color: var(--faint); }
+.no-data { text-align: center; padding: 32px; color: var(--faint); font-style: italic; }
+
+/* ── Charts ──────────────────────────────────────────── */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+.chart-container {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px;
+    position: relative;
+    height: 280px;
+}
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+    .container, .nav-inner { padding: 0 16px; }
+    .page-title { font-size: 22px; }
+    .filters { flex-direction: column; align-items: stretch; }
+    select { width: 100%; }
+}
+@media (min-width: 769px) {
+    .nav-toggle { display: none; }
+    .nav-links {
+        display: flex !important;
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        background: none;
+        border: none;
+        box-shadow: none;
+        z-index: auto;
+    }
+    .nav-links a {
+        height: 72px;
+        padding: 0 12px;
+        font-size: 18px;
+        width: auto;
+        border-bottom: none;
+    }
+    .nav-links a span::after {
+        content: attr(data-label);
+        display: block;
+        font-weight: 700;
+        height: 0;
+        visibility: hidden;
+        overflow: hidden;
+    }
+}

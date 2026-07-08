@@ -3,310 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RISC-V Processor Leaderboard</title>
+    <title>RISC-V Processor Leaderboard — Unary Lab</title>
+    <meta name="description" content="Leaderboard for student-built 5-stage pipelined RISC-V (RV32I) processors — Unary Lab, Di Wu, UCF ECE">
+    <link rel="icon" href="https://unarylab.github.io/file/logo/unary-logo-black.svg" type="image/svg+xml">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #22c55e;
-            --warning: #f59e0b;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-
-        body {
-            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        .filters {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-
-        .filter-group label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
-
-        select {
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 1rem;
-            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-            background: white;
-            cursor: pointer;
-            min-width: 150px;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .metrics-info {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .metrics-info h2 {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .metric-card {
-            padding: 0.75rem;
-            background: var(--bg);
-            border-radius: 8px;
-            border-left: 3px solid var(--primary);
-        }
-
-        .metric-card .name {
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .metric-card .desc {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-
-        .metric-card .better {
-            font-size: 0.75rem;
-            margin-top: 0.25rem;
-            color: var(--success);
-            font-weight: 500;
-        }
-
-        .leaderboard-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .leaderboard-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-            font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
-        }
-
-        th, td {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        th {
-            background: var(--bg);
-            font-weight: 600;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            cursor: pointer;
-            user-select: none;
-            white-space: nowrap;
-        }
-
-        th:hover {
-            background: #e2e8f0;
-        }
-
-        th.sorted-asc::after {
-            content: ' ▲';
-            font-size: 0.75rem;
-        }
-
-        th.sorted-desc::after {
-            content: ' ▼';
-            font-size: 0.75rem;
-        }
-
-        th.no-sort {
-            cursor: default;
-        }
-
-        th.no-sort:hover {
-            background: var(--bg);
-        }
-
-        tr:hover {
-            background: #f1f5f9;
-        }
-
-        .rank {
-            font-weight: 700;
-            width: 60px;
-        }
-
-        .rank-1 { color: #fbbf24; }
-        .rank-2 { color: #9ca3af; }
-        .rank-3 { color: #b45309; }
-
-        .medal {
-            font-size: 1.25rem;
-        }
-
-        .team-name {
-            font-weight: 500;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .charts-section {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .charts-section h2 {
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .chart-container {
-            background: var(--bg);
-            border-radius: 8px;
-            padding: 1rem;
-            position: relative;
-            height: 280px;
-        }
-
-        .chart-container h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text);
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 1.75rem;
-            }
-
-            .filters {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            select {
-                width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>RISC-V Processor Leaderboard</h1>
-            <p class="subtitle">Implementing 5-stage pipelined RISC-V (RV32I) processors in undergraduate computer architecture courses</p>
-            <p><a href="https://github.com/unarylab/comparch_leaderboard-RISC-V" target="_blank">View GitHub repo</a> by <a href="https://www.unarylab.com" target="_blank">UnaryLab</a></p>
-        </header>
 
-        <div class="metrics-info">
-            <h2>Metrics</h2>
+    <nav>
+        <div class="nav-inner">
+            <a class="site-title" href="https://unarylab.github.io/">
+                <img src="https://unarylab.github.io/file/logo/unary-logo-black.svg" alt="Unary Lab" class="nav-logo">
+                Unary Lab
+            </a>
+            <button class="nav-toggle" aria-label="Toggle navigation"
+                onclick="document.getElementById('nav-links').classList.toggle('open')">&#9776;</button>
+            <div class="nav-links" id="nav-links">
+                <a href="https://unarylab.github.io/index.html"><span data-label="Home">Home</span></a>
+                <a href="https://unarylab.github.io/news.html"><span data-label="News">News</span></a>
+                <a href="https://unarylab.github.io/publication.html"><span data-label="Publication">Publication</span></a>
+                <a href="https://unarylab.github.io/software.html"><span data-label="Software">Software</span></a>
+                <a href="https://unarylab.github.io/teaching.html"><span data-label="Teaching">Teaching</span></a>
+                <a href="https://unarylab.github.io/team.html"><span data-label="Team">Team</span></a>
+                <a href="https://unarylab.github.io/photo.html"><span data-label="Photo">Photo</span></a>
+            </div>
+        </div>
+    </nav>
+
+  <main>
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">RISC-V Processor Leaderboard</h1>
+            <p class="subtitle">Student-built 5-stage pipelined RISC-V (RV32I) processors in undergraduate computer architecture courses.
+            <a href="https://github.com/unarylab/comparch_leaderboard-RISC-V" target="_blank" rel="noopener">GitHub repo</a></p>
+            <p class="subtitle">Contributors:<br>
+            - Daniel Price (UCF)<br>
+            - Colin Maggard (UW-Madison)<br>
+            - Amulya Bhat (VITV/IITM/UCF)<br>
+            - Angel Bercian (UCF)<br>
+            - Fabian Nunez (UCF)</p>
+        </div>
+
+        <div class="section">
+            <h2 class="section-title">Metrics</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="name">IPC</div>
@@ -337,15 +77,22 @@
         </div>
 
         <div class="filters">
-            <h2>Filters</h2>
             <div class="filter-group">
+                <label for="year-filter">Year</label>
                 <select id="year-filter">
                     <option value="all">All Years</option>
                 </select>
             </div>
             <div class="filter-group">
+                <label for="semester-filter">Semester</label>
                 <select id="semester-filter">
                     <option value="all">All Semesters</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="university-filter">University</label>
+                <select id="university-filter">
+                    <option value="all">All Universities</option>
                 </select>
             </div>
         </div>
@@ -353,15 +100,15 @@
         <!-- Semester Setup Summaries -->
         <div id="semester-setups"></div>
 
-        <div class="leaderboard-section">
-            <h2 id="leaderboard-title">Leaderboard</h2>
+        <div class="section">
+            <h2 class="section-title" id="leaderboard-title">Leaderboard</h2>
             <div class="table-container">
                 <div id="leaderboard-content" class="loading">Loading data...</div>
             </div>
         </div>
 
-        <div class="charts-section">
-            <h2>Distribution</h2>
+        <div class="section">
+            <h2 class="section-title">Distribution</h2>
             <div class="charts-grid">
                 <div class="chart-container">
                     <canvas id="chart-ipc"></canvas>
@@ -381,527 +128,9 @@
             </div>
         </div>
 
-        
     </div>
+  </main>
 
-    <script>
-        // Configuration
-        const METRICS = {
-            ipc: { name: 'IPC', higherIsBetter: true },
-            cycle_count: { name: 'Cycle Count', higherIsBetter: false },
-            frequency_mhz: { name: 'Frequency (MHz)', higherIsBetter: true },
-            area_mm2: { name: 'Area (mm²)', higherIsBetter: false },
-            power_mw: { name: 'Power (mW)', higherIsBetter: false }
-        };
-
-        let allData = [];
-        let currentSort = { column: 'ipc', ascending: false }; // Matches default render: IPC, best first
-        let charts = {};
-
-        // Escape user-submitted (CSV/markdown/filename) strings before innerHTML interpolation
-        function escapeHtml(s) {
-            return String(s).replace(/[&<>"']/g, c => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-            }[c]));
-        }
-
-        // Parse CSV text to array of objects
-        function parseCSV(text) {
-            const lines = text.replace(/^\uFEFF/, '').trim().split(/\r?\n/);
-            const headers = lines[0].split(',').map(h => h.trim());
-            const data = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                const values = parseCSVLine(lines[i]);
-                if (values.length === headers.length) {
-                    const row = {};
-                    headers.forEach((header, idx) => {
-                        row[header] = values[idx];
-                    });
-                    // Convert numeric fields (handle empty values)
-                    ['ipc', 'cycle_count', 'frequency_mhz', 'area_mm2', 'power_mw'].forEach(key => {
-                        if (row[key] && row[key].trim() !== '') {
-                            row[key] = parseFloat(row[key]);
-                        } else {
-                            row[key] = null;
-                        }
-                    });
-                    data.push(row);
-                }
-            }
-            return data;
-        }
-
-        // Handle CSV values with commas inside quotes
-        function parseCSVLine(line) {
-            const values = [];
-            let current = '';
-            let inQuotes = false;
-
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"') {
-                    inQuotes = !inQuotes;
-                } else if (char === ',' && !inQuotes) {
-                    values.push(current.trim());
-                    current = '';
-                } else {
-                    current += char;
-                }
-            }
-            values.push(current.trim());
-            return values;
-        }
-
-        // Parse filename to get year, semester, university
-        function parseFilename(filename) {
-            const name = filename.replace('.csv', '');
-            const parts = name.split('-');
-            if (parts.length >= 3) {
-                return {
-                    year: parts[0],
-                    semester: parts[1],
-                    university: parts.slice(2).join('-').toUpperCase()
-                };
-            }
-            return null;
-        }
-
-        // Fetch the generated file list, then load the CSVs
-        async function loadAllData() {
-            const response = await fetch('database/files.json');
-            if (!response.ok) {
-                throw new Error(`Failed to fetch database/files.json: HTTP ${response.status}`);
-            }
-            const csvFiles = await response.json();
-            return await loadCSVFiles(csvFiles);
-        }
-
-        // Load CSV files
-        async function loadCSVFiles(files) {
-            const allRows = [];
-            const cacheBuster = `cb=${Date.now()}`;
-            for (const file of files) {
-                try {
-                    const response = await fetch(`database/${file}?${cacheBuster}`);
-                    if (!response.ok) continue;
-
-                    const text = await response.text();
-                    const info = parseFilename(file);
-
-                    if (info) {
-                        const rows = parseCSV(text);
-                        rows.forEach(row => {
-                            row.year = info.year;
-                            row.semester = info.semester;
-                            row.university = info.university;
-                        });
-                        allRows.push(...rows);
-                    }
-                } catch (e) {
-                    console.error(`Failed to load ${file}:`, e);
-                }
-            }
-
-            return allRows;
-        }
-
-        // Populate filter dropdowns
-        function populateFilters(data) {
-            const years = [...new Set(data.map(d => d.year))].sort().reverse();
-            const semesters = [...new Set(data.map(d => d.semester))];
-
-            const yearSelect = document.getElementById('year-filter');
-            years.forEach(year => {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                yearSelect.appendChild(option);
-            });
-
-            const semesterSelect = document.getElementById('semester-filter');
-            const semesterOrder = { spring: 1, summer: 2, fall: 3 };
-            semesters.sort((a, b) => (semesterOrder[a] || 99) - (semesterOrder[b] || 99));
-            semesters.forEach(sem => {
-                const option = document.createElement('option');
-                option.value = sem;
-                option.textContent = sem.charAt(0).toUpperCase() + sem.slice(1);
-                semesterSelect.appendChild(option);
-            });
-        }
-
-        // Filter data based on current selections
-        function filterData(data) {
-            const year = document.getElementById('year-filter').value;
-            const semester = document.getElementById('semester-filter').value;
-
-            return data.filter(row => {
-                if (year !== 'all' && row.year !== year) return false;
-                if (semester !== 'all' && row.semester !== semester) return false;
-                return true;
-            });
-        }
-
-        // Format number for display
-        function formatValue(value, metric) {
-            if (value === null || value === undefined || isNaN(value)) {
-                return '-';
-            }
-            if (metric === 'cycle_count') {
-                return value.toLocaleString();
-            } else if (metric === 'ipc' || metric === 'area_mm2') {
-                return value.toFixed(2);
-            } else {
-                return value.toFixed(0);
-            }
-        }
-
-        // Render leaderboard table
-        function renderTable(data) {
-            const container = document.getElementById('leaderboard-content');
-
-            if (data.length === 0) {
-                container.innerHTML = '<div class="no-data">No data available for the selected filters.</div>';
-                return;
-            }
-
-            // Sort data by current column
-            let sortedData = [...data];
-            const sortColumn = currentSort.column;
-
-            if (sortColumn === 'semester') {
-                // Sort by year (and semester within year)
-                const semesterOrder = { spring: 1, summer: 2, fall: 3 };
-                sortedData.sort((a, b) => {
-                    const yearDiff = parseInt(a.year) - parseInt(b.year);
-                    if (yearDiff !== 0) {
-                        return currentSort.ascending ? yearDiff : -yearDiff;
-                    }
-                    const semDiff = (semesterOrder[a.semester] || 0) - (semesterOrder[b.semester] || 0);
-                    return currentSort.ascending ? semDiff : -semDiff;
-                });
-
-                // No meaningful ranking for semester sort
-                sortedData.forEach(row => {
-                    row.rank = '';
-                });
-            } else if (METRICS[sortColumn]) {
-                const ascending = currentSort.ascending;
-
-                // Sort with null values at the end
-                sortedData.sort((a, b) => {
-                    const aVal = a[sortColumn];
-                    const bVal = b[sortColumn];
-                    // Handle null values - put them at the end
-                    if (aVal === null && bVal === null) return 0;
-                    if (aVal === null) return 1;
-                    if (bVal === null) return -1;
-                    const diff = aVal - bVal;
-                    return ascending ? diff : -diff;
-                });
-
-                // Assign ranks based on current sort (only for non-null values)
-                let currentRank = 1;
-                let prevValue = null;
-                sortedData.forEach((row, idx) => {
-                    if (row[sortColumn] === null) {
-                        row.rank = '-';
-                    } else {
-                        if (prevValue !== null && row[sortColumn] !== prevValue) {
-                            currentRank = idx + 1;
-                        }
-                        row.rank = currentRank;
-                        prevValue = row[sortColumn];
-                    }
-                });
-            }
-
-            const year = document.getElementById('year-filter').value;
-            const semester = document.getElementById('semester-filter').value;
-            const showSemester = year === 'all' || semester === 'all';
-
-            // Update title
-            const title = document.getElementById('leaderboard-title');
-            if (year !== 'all' && semester !== 'all') {
-                title.textContent = `${semester.charAt(0).toUpperCase() + semester.slice(1)} ${year} Leaderboard`;
-            } else {
-                title.textContent = 'All-Time Leaderboard';
-            }
-
-            // Build table HTML
-            let html = '<table><thead><tr>';
-            html += '<th class="no-sort">Rank</th>';
-            html += '<th class="no-sort">Team</th>';
-
-            // Metric columns (sortable)
-            Object.entries(METRICS).forEach(([key, config]) => {
-                const isCurrentSort = currentSort.column === key;
-                const sortClass = isCurrentSort
-                    ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
-                    : '';
-                html += `<th data-column="${key}" class="${sortClass}">${config.name}</th>`;
-            });
-
-            // Semester at the end (sortable by year)
-            if (showSemester) {
-                const isSemesterSort = currentSort.column === 'semester';
-                const semSortClass = isSemesterSort
-                    ? (currentSort.ascending ? 'sorted-asc' : 'sorted-desc')
-                    : '';
-                html += `<th data-column="semester" class="${semSortClass}">Semester</th>`;
-            }
-
-            html += '<th class="no-sort">University</th>';
-
-            html += '</tr></thead><tbody>';
-
-            sortedData.forEach(row => {
-                const rankClass = (typeof row.rank === 'number' && row.rank <= 3) ? `rank-${row.rank}` : '';
-                let medal = '';
-                if (row.rank === 1) medal = '<span class="medal">&#129351;</span> ';
-                else if (row.rank === 2) medal = '<span class="medal">&#129352;</span> ';
-                else if (row.rank === 3) medal = '<span class="medal">&#129353;</span> ';
-
-                html += '<tr>';
-                html += `<td class="rank ${rankClass}">${medal}${row.rank}</td>`;
-                html += `<td class="team-name">${escapeHtml(row.team_name)}</td>`;
-
-                Object.keys(METRICS).forEach(key => {
-                    html += `<td>${formatValue(row[key], key)}</td>`;
-                });
-
-                // Semester at the end
-                if (showSemester) {
-                    const semDisplay = row.semester.charAt(0).toUpperCase() + row.semester.slice(1);
-                    html += `<td>${escapeHtml(semDisplay)} ${escapeHtml(row.year)}</td>`;
-                }
-
-                html += `<td>${row.university ? escapeHtml(row.university) : '-'}</td>`;
-
-                html += '</tr>';
-            });
-
-            html += '</tbody></table>';
-            container.innerHTML = html;
-
-            // Add click handlers for sortable columns
-            container.querySelectorAll('th[data-column]').forEach(th => {
-                th.addEventListener('click', () => {
-                    const column = th.dataset.column;
-                    if (currentSort.column === column) {
-                        // Toggle direction
-                        currentSort.ascending = !currentSort.ascending;
-                    } else {
-                        // New column - default to best values first (or ascending for semester)
-                        currentSort.column = column;
-                        if (column === 'semester') {
-                            currentSort.ascending = true; // Oldest first by default
-                        } else {
-                            currentSort.ascending = !METRICS[column].higherIsBetter;
-                        }
-                    }
-                    renderTable(filterData(allData));
-                });
-            });
-        }
-
-        // Chart colors
-        const CHART_COLORS = [
-            'rgba(37, 99, 235, 0.7)',   // blue
-            'rgba(34, 197, 94, 0.7)',   // green
-            'rgba(249, 115, 22, 0.7)',  // orange
-            'rgba(168, 85, 247, 0.7)',  // purple
-            'rgba(236, 72, 153, 0.7)',  // pink
-            'rgba(20, 184, 166, 0.7)',  // teal
-            'rgba(245, 158, 11, 0.7)',  // amber
-            'rgba(239, 68, 68, 0.7)',   // red
-            'rgba(99, 102, 241, 0.7)',  // indigo
-            'rgba(16, 185, 129, 0.7)',  // emerald
-            'rgba(251, 146, 60, 0.7)',  // orange light
-            'rgba(139, 92, 246, 0.7)',  // violet
-        ];
-
-        // Render point cloud charts
-        function renderCharts(data) {
-            // Destroy existing charts first so empty data clears stale charts
-            Object.keys(charts).forEach(key => {
-                charts[key].destroy();
-                delete charts[key];
-            });
-
-            if (data.length === 0) return;
-
-            Object.entries(METRICS).forEach(([key, config]) => {
-                const canvas = document.getElementById(`chart-${key}`);
-                if (!canvas) return;
-
-                // Prepare data points - each team is a point (filter out null values)
-                const validData = data.filter(row => row[key] !== null);
-                const chartData = validData.map((row, idx) => ({
-                    x: idx + 1,
-                    y: row[key],
-                    label: row.team_name
-                }));
-
-                // Create chart
-                charts[key] = new Chart(canvas, {
-                    type: 'scatter',
-                    data: {
-                        datasets: [{
-                            label: config.name,
-                            data: chartData,
-                            backgroundColor: validData.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
-                            borderColor: validData.map((_, i) => CHART_COLORS[i % CHART_COLORS.length].replace('0.7', '1')),
-                            borderWidth: 2,
-                            pointRadius: 8,
-                            pointHoverRadius: 12
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: config.name + (config.higherIsBetter ? ' (↑ Higher is better)' : ' (↓ Lower is better)'),
-                                font: {
-                                    family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif",
-                                    size: 14
-                                }
-                            },
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const point = context.raw;
-                                        return `${point.label}: ${formatValue(point.y, key)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                display: false,
-                                min: 0,
-                                max: validData.length + 1
-                            },
-                            y: {
-                                title: {
-                                    display: true,
-                                    text: config.name,
-                                    font: {
-                                        family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
-                                    }
-                                },
-                                ticks: {
-                                    font: {
-                                        family: "'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            });
-        }
-
-        async function fetchSemesterSetup(year, semester, university) {
-            const filename = `${year}-${semester}-${university.toLowerCase()}.md`;
-            const cacheBuster = `cb=${Date.now()}`;
-            try {
-                const response = await fetch(`database/${filename}?${cacheBuster}`);
-                if (!response.ok) return null;
-                const text = await response.text();
-                const procMatch = text.match(/### Processor Setup\n([\s\S]*?)(?=###|$)/);
-                const workloadMatch = text.match(/### Workload Setup\n([\s\S]*?)(?=###|$)/);
-                return {
-                    year,
-                    semester,
-                    university,
-                    processor: procMatch ? procMatch[1].trim() : '',
-                    workload: workloadMatch ? workloadMatch[1].trim() : ''
-                };
-            } catch (e) {
-                return null;
-            }
-        }
-
-        async function renderSemesterSetups(data) {
-            const setups = {};
-            const promises = [];
-            data.forEach(row => {
-                const key = `${row.year}-${row.semester}-${row.university}`;
-                if (!setups[key]) {
-                    setups[key] = null;
-                    promises.push(
-                        fetchSemesterSetup(row.year, row.semester, row.university).then(setup => {
-                            setups[key] = setup;
-                        })
-                    );
-                }
-            });
-            await Promise.all(promises);
-
-            const container = document.getElementById('semester-setups');
-            let html = '';
-            Object.values(setups).forEach(setup => {
-                if (!setup) return;
-                html += `<div class="metrics-info" style="margin-bottom:1.5rem;">
-                    <h2>${escapeHtml(setup.semester.charAt(0).toUpperCase() + setup.semester.slice(1))} ${escapeHtml(setup.year)} (${escapeHtml(setup.university)}) Setup</h2>
-                    <div class="metrics-grid">
-                        <div class="metric-card">
-                            <div class="name">Processor Setup</div>
-                            <div class="desc">${setup.processor ? escapeHtml(setup.processor) : '<span style="color:#aaa">N/A</span>'}</div>
-                        </div>
-                        <div class="metric-card">
-                            <div class="name">Workload Setup</div>
-                            <div class="desc">${setup.workload ? escapeHtml(setup.workload) : '<span style="color:#aaa">N/A</span>'}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        // Update display when filters change
-        async function updateDisplay() {
-            currentSort = { column: 'ipc', ascending: false }; // Reset sort when filter changes
-            const filtered = filterData(allData);
-            await renderSemesterSetups(filtered);
-            renderCharts(filtered);
-            renderTable(filtered);
-        }
-
-        // Initialize
-        async function init() {
-            try {
-                allData = await loadAllData();
-            } catch (e) {
-                console.error(e);
-                document.getElementById('leaderboard-content').innerHTML =
-                    '<div class="no-data">Failed to load data: database/files.json could not be fetched.</div>';
-                return;
-            }
-
-            if (allData.length === 0) {
-                document.getElementById('leaderboard-content').innerHTML =
-                    '<div class="no-data">No data found. Please add CSV files to the database directory.</div>';
-                return;
-            }
-
-            populateFilters(allData);
-
-            // Add event listeners
-            document.getElementById('year-filter').addEventListener('change', updateDisplay);
-            document.getElementById('semester-filter').addEventListener('change', updateDisplay);
-
-            // Initial render
-            updateDisplay();
-        }
-
-        init();
-    </script>
+    <script src="app.js?v=1"></script>
 </body>
 </html>

@@ -7,6 +7,8 @@ on:
       - 'database/*.md'
       - 'generate_leaderboard.py'
       - 'index.html'
+      - 'style.css'
+      - 'app.js'
     branches:
       - main
   pull_request:
@@ -59,7 +61,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           mkdir _site
-          cp index.html README.md _site/
+          cp index.html style.css app.js README.md _site/
           cp -r database _site/
 
       - name: Upload artifact
