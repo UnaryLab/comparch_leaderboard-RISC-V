@@ -9,8 +9,8 @@
     --border: #eee;
     --border-strong: #ddd;
     --link: navy;
-    --nav-bg: #B0B5AB;
-    --nav-border: #9da29a;
+    --header-bg: #B0B5AB;
+    --header-border: #9da29a;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,8 +34,12 @@ a:hover { color: #000; }
 
 main { padding: 32px 0 72px; }
 
-/* ── Navigation (mirrors the main site) ─────────────── */
-nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); position: relative; }
+/* ── Site header ────────────────────────────────────── */
+.site-header {
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--header-border);
+    position: relative;
+}
 .nav-inner {
     max-width: 900px;
     margin: 0 auto;
@@ -45,7 +49,9 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); pos
     justify-content: space-between;
     min-height: 72px;
 }
+.site-copy { flex: 1; text-align: center; }
 .site-title {
+    font-family: "Gill Sans", "Gill Sans MT", "Gill Sans Nova", Cabin, Calibri, sans-serif;
     font-weight: 700;
     font-size: 18px;
     color: #1a1a1a;
@@ -59,53 +65,15 @@ nav { background: var(--nav-bg); border-bottom: 1px solid var(--nav-border); pos
 }
 .site-title:hover { color: #000; text-decoration: none; }
 .nav-logo { height: 48px; width: auto; display: block; }
-.nav-links {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    width: max-content;
-    background: var(--nav-bg);
-    border-top: 1px solid var(--nav-border);
-    flex-direction: column;
-    z-index: 999;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-.nav-links.open { display: flex; }
-.nav-links a {
-    padding: 14px 24px;
-    font-size: 16px;
-    color: #2d2d2d;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    white-space: nowrap;
-    width: 100%;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
-}
-.nav-links a span::after { display: none; }
-.nav-links a:hover { color: #000; background: rgba(0,0,0,0.08); text-decoration: none; }
-.nav-links a.active { font-weight: 700; color: #000; }
-.nav-toggle {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #2d2d2d;
-    padding: 8px;
-    line-height: 1;
-    font-family: inherit;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
-}
+.site-heading { font-size: 25px; font-weight: 700; color: var(--heading); margin-bottom: 4px; }
+.site-description { color: #444; font-size: 15px; }
+.site-description a { color: var(--link); }
+.site-description a:hover { color: #000033; }
 
 /* ── Page header ─────────────────────────────────────── */
 .page-header { margin-bottom: 32px; }
 .page-title { font-size: 25px; font-weight: 700; color: var(--heading); margin-bottom: 8px; }
-.subtitle { color: var(--muted); font-size: 15px; margin-bottom: 4px; }
-.subtitle a { color: var(--link); }
-.subtitle a:hover { color: #000033; }
+.contributors { color: var(--muted); font-size: 15px; padding-left: 20px; }
 
 /* ── Sections ────────────────────────────────────────── */
 .section { margin-bottom: 44px; }
@@ -150,7 +118,7 @@ select:focus { outline: none; border-color: var(--faint); }
 .metric-card {
     padding: 12px 14px;
     border: 1px solid var(--border);
-    border-left: 3px solid var(--nav-bg);
+    border-left: 3px solid var(--header-bg);
     border-radius: 2px;
 }
 .metric-card .name { font-weight: 700; font-size: 15px; color: var(--heading); margin-bottom: 3px; }
@@ -203,35 +171,7 @@ tbody tr:hover { background: #f6f6f4; }
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
     .container, .nav-inner { padding: 0 16px; }
-    .page-title { font-size: 22px; }
+    .site-heading, .page-title { font-size: 22px; }
     .filters { flex-direction: column; align-items: stretch; }
     select { width: 100%; }
-}
-@media (min-width: 769px) {
-    .nav-toggle { display: none; }
-    .nav-links {
-        display: flex !important;
-        position: static;
-        flex-direction: row;
-        align-items: center;
-        background: none;
-        border: none;
-        box-shadow: none;
-        z-index: auto;
-    }
-    .nav-links a {
-        height: 72px;
-        padding: 0 12px;
-        font-size: 18px;
-        width: auto;
-        border-bottom: none;
-    }
-    .nav-links a span::after {
-        content: attr(data-label);
-        display: block;
-        font-weight: 700;
-        height: 0;
-        visibility: hidden;
-        overflow: hidden;
-    }
 }
