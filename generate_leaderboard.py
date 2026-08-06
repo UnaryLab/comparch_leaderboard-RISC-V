@@ -62,9 +62,9 @@ def generate_full_readme() -> str:
         "Contributors:",
         "- Daniel Price (UCF)",
         "- Colin Maggard (UW-Madison)",
-        "- Amulya Bhat (VITV/IITM/UCF)",
-        "- Angel Bercian (UCF)",
         "- Fabian Nunez (UCF)",
+        "- Angel Bercian (UCF)",
+        "- Amulya Bhat (VITV/IITM/UCF)",
         "",
     ]
     return "\n".join(lines)

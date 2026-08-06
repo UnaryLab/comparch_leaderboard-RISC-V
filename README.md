@@ -24,6 +24,6 @@ The project was set up by Daniel Price in Spring 2026, during his PhD study in t
 Contributors:
 - Daniel Price (UCF)
 - Colin Maggard (UW-Madison)
-- Amulya Bhat (VITV/IITM/UCF)
-- Angel Bercian (UCF)
 - Fabian Nunez (UCF)
+- Angel Bercian (UCF)
+- Amulya Bhat (VITV/IITM/UCF)
